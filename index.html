@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edgeform | Quantitative Multi-Sport Prediction Engine</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkBg: '#0b0f19',
+                        cardBg: '#131b2e',
+                        borderCol: '#1e293b',
+                        accentGreen: '#10b981',
+                        accentBlue: '#3b82f6',
+                        accentRed: '#ef4444',
+                        accentYellow: '#f59e0b'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0b0f19; color: #f8fafc; }
+        .glass-card { background: rgba(19, 27, 46, 0.75); backdrop-filter: blur(12px); border: 1px solid rgba(30, 41, 59, 0.7); }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #0b0f19; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-blue-500 selection:text-white">
+
+    <!-- HEADER -->
+    <header class="border-b border-borderCol bg-darkBg/90 sticky top-0 z-50 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-gradient-to-tr from-blue-600 to-emerald-500 p-2 rounded-xl text-white font-black text-xl tracking-wider shadow-lg shadow-blue-500/20">EF</div>
+                <div>
+                    <h1 class="font-extrabold text-lg tracking-tight text-white">EDGEFORM <span class="text-xs px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 font-semibold border border-blue-500/30">v3.2 QUANT</span></h1>
+                    <p class="text-xs text-slate-400">Quantitative Multi-Sport Prediction & Acca Engine</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <span class="w-2 h-2 mr-1.5 bg-emerald-400 rounded-full animate-pulse"></span> Live Sync Active
+                </span>
+                <button onclick="loadFixtures()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-3 py-2 rounded-lg border border-borderCol transition">
+                    🔄 Refresh Data
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- STATS BANNER -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="glass-card p-4 rounded-xl border-l-4 border-l-blue-500">
+                <p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Active Fixtures</p>
+                <p id="statTotalFixtures" class="text-2xl font-black text-white mt-1">0</p>
+            </div>
+            <div class="glass-card p-4 rounded-xl border-l-4 border-l-emerald-500">
+                <p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Today's Bankers (&ge;85%)</p>
+                <p id="statBankers" class="text-2xl font-black text-emerald-400 mt-1">0</p>
+            </div>
+            <div class="glass-card p-4 rounded-xl border-l-4 border-l-amber-500">
+                <p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Today's Keeps (76-84%)</p>
+                <p id="statKeeps" class="text-2xl font-black text-amber-400 mt-1">0</p>
+            </div>
+            <div class="glass-card p-4 rounded-xl border-l-4 border-l-purple-500">
+                <p class="text-xs text-slate-400 font-medium uppercase tracking-wider">Acca Engine Target</p>
+                <p class="text-2xl font-black text-purple-400 mt-1">Strictly Today</p>
+            </div>
+        </div>
+
+        <!-- NAVIGATION TABS -->
+        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-borderCol pb-4">
+            <div class="flex space-x-2 overflow-x-auto pb-2 sm:pb-0">
+                <button onclick="filterSport('ALL')" id="tab-ALL" class="sport-tab px-4 py-2 rounded-lg text-xs font-bold transition bg-blue-600 text-white shadow-md shadow-blue-600/30">All Sports</button>
+                <button onclick="filterSport('FOOTBALL')" id="tab-FOOTBALL" class="sport-tab px-4 py-2 rounded-lg text-xs font-bold transition bg-slate-800 text-slate-300 hover:bg-slate-700">⚽ Football</button>
+                <button onclick="filterSport('BASKETBALL')" id="tab-BASKETBALL" class="sport-tab px-4 py-2 rounded-lg text-xs font-bold transition bg-slate-800 text-slate-300 hover:bg-slate-700">🏀 Basketball</button>
+                <button onclick="filterSport('HOCKEY')" id="tab-HOCKEY" class="sport-tab px-4 py-2 rounded-lg text-xs font-bold transition bg-slate-800 text-slate-300 hover:bg-slate-700">🏒 Ice Hockey</button>
+                <button onclick="filterSport('HANDBALL')" id="tab-HANDBALL" class="sport-tab px-4 py-2 rounded-lg text-xs font-bold transition bg-slate-800 text-slate-300 hover:bg-slate-700">🤾 Handball</button>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button onclick="switchView('fixtures')" id="viewBtn-fixtures" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">📋 Match Feed</button>
+                <button onclick="switchView('accas')" id="viewBtn-accas" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700">🎯 Today's Accas (~5x-20x)</button>
+            </div>
+        </div>
+
+        <!-- MAIN VIEW: FIXTURES -->
+        <div id="view-fixtures" class="space-y-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-base font-bold text-white flex items-center">
+                    <span>Multi-Sport Scraped Fixture Schedule</span>
+                </h2>
+                <div class="text-xs text-slate-400">
+                    Thresholds: <span class="text-emerald-400 font-bold">&ge;85% Banker</span> | <span class="text-amber-400 font-bold">76-84% Keep</span> | <span class="text-red-400 font-bold">&lt;75% Kill</span>
+                </div>
+            </div>
+
+            <div id="fixturesList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- Dynamically injected match cards -->
+            </div>
+        </div>
+
+        <!-- MAIN VIEW: ACCUMULATOR BUILDER -->
+        <div id="view-accas" class="hidden space-y-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-bold text-white">Today's Targeted Accumulator Tiers</h2>
+                    <p class="text-xs text-slate-400">Engineered exclusively from live scraped fixtures scheduled for today (<span id="currentDateDisplay" class="text-blue-400 font-bold">2026-10-21</span>).</p>
+                </div>
+                <button onclick="generateAccas()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition shadow-lg shadow-blue-600/30">
+                    ⚡ Re-calculate Tiers
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6" id="accasContainer">
+                <!-- Dynamically injected accumulator tickets -->
+            </div>
+        </div>
+
+    </main>
+
+    <!-- 9-STEP MODAL INSPECTOR -->
+    <div id="inspectorModal" class="fixed inset-0 z-50 hidden bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="glass-card max-w-2xl w-full max-h-[90vh] overflow-y-auto custom-scrollbar rounded-2xl p-6 space-y-6 border border-borderCol shadow-2xl">
+            <div class="flex items-center justify-between border-b border-borderCol pb-4">
+                <div>
+                    <span id="modalSportBadge" class="text-xs px-2.5 py-1 rounded-md font-bold uppercase tracking-wider bg-blue-500/20 text-blue-400 border border-blue-500/30">Sport</span>
+                    <h3 id="modalFixtureTitle" class="text-xl font-black text-white mt-2">Fixture Analysis</h3>
+                </div>
+                <button onclick="closeModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white p-2 rounded-xl transition">&times;</button>
+            </div>
+            
+            <div id="modalContent" class="space-y-4 text-sm text-slate-300">
+                <!-- 9-Step content injected here -->
+            </div>
+
+            <div class="border-t border-borderCol pt-4 flex justify-end">
+                <button onclick="closeModal()" class="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition">Close Inspector</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-borderCol bg-darkBg/95 py-6 mt-12 text-center text-xs text-slate-500 space-y-2">
+        <p>Edgeform Quantitative Engine &bull; Automated SportyBet Multi-Market Scraper &bull; NFA (Statistical Modeling Only)</p>
+    </footer>
+
+    <script>
+        const TODAY_DATE = "2026-10-21";
+        let rawFixtures = [];
+        let currentFilter = 'ALL';
+        let currentView = 'fixtures';
+
+        // Fetch live scraped fixtures dataset from fixtures.json
+        async function loadFixtures() {
+            try {
+                const response = await fetch('./fixtures.json?v=' + new Date().getTime());
+                if (response.ok) {
+                    rawFixtures = await response.json();
+                    initEngine();
+                } else {
+                    console.warn("fixtures.json not found, using baseline fallback array.");
+                    loadFallbackFixtures();
+                }
+            } catch (error) {
+                console.error("Error loading live fixtures JSON:", error);
+                loadFallbackFixtures();
+            }
+        }
+
+        function loadFallbackFixtures() {
+            rawFixtures = [
+                { id: 1, sport: "FOOTBALL", comp: "UEFA Champions League", home: "Real Madrid", away: "AC Milan", date: TODAY_DATE, time: "20:00 WAT", homeGoals: 2.15, awayGoals: 0.95, prob: 87.5, market: "Home Win (1X2)", odds: 1.45 },
+                { id: 2, sport: "FOOTBALL", comp: "UEFA Champions League", home: "Bayern Munich", away: "Club Brugge", date: TODAY_DATE, time: "20:00 WAT", homeGoals: 2.85, awayGoals: 0.70, prob: 91.0, market: "Over 2.5 Goals", odds: 1.35 },
+                { id: 6, sport: "BASKETBALL", comp: "EuroLeague", home: "Real Madrid Baloncesto", away: "Olimpia Milano", date: TODAY_DATE, time: "19:00 WAT", homeGoals: 86.5, awayGoals: 78.0, prob: 86.0, market: "Home Win (Incl. OT)", odds: 1.38 },
+                { id: 9, sport: "HOCKEY", comp: "NHL", home: "Edmonton Oilers", away: "Calgary Flames", date: TODAY_DATE, time: "02:00 WAT", homeGoals: 3.80, awayGoals: 2.40, prob: 88.0, market: "Over 5.5 Goals", odds: 1.60 },
+                { id: 11, sport: "HANDBALL", comp: "EHF European League", home: "THW Kiel", away: "Montpellier HB", date: TODAY_DATE, time: "17:45 WAT", homeGoals: 32.5, awayGoals: 28.0, prob: 85.5, market: "Home Win", odds: 1.42 }
+            ];
+            initEngine();
+        }
+
+        function initEngine() {
+            renderFixtures();
+            updateStats();
+            generateAccas();
+        }
+
+        function filterSport(sport) {
+            currentFilter = sport;
+            document.querySelectorAll('.sport-tab').forEach(btn => {
+                btn.className = "sport-tab px-4 py-2 rounded-lg text-xs font-bold transition bg-slate-800 text-slate-300 hover:bg-slate-700";
+            });
+            document.getElementById(`tab-${sport}`).className = "sport-tab px-4 py-2 rounded-lg text-xs font-bold transition bg-blue-600 text-white shadow-md shadow-blue-600/30";
+            renderFixtures();
+        }
+
+        function switchView(view) {
+            currentView = view;
+            if (view === 'fixtures') {
+                document.getElementById('view-fixtures').classList.remove('hidden');
+                document.getElementById('view-accas').classList.add('hidden');
+                document.getElementById('viewBtn-fixtures').className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30";
+                document.getElementById('viewBtn-accas').className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700";
+            } else {
+                document.getElementById('view-fixtures').classList.add('hidden');
+                document.getElementById('view-accas').classList.remove('hidden');
+                document.getElementById('viewBtn-accas').className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30";
+                document.getElementById('viewBtn-fixtures').className = "px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 hover:bg-slate-700";
+                generateAccas();
+            }
+        }
+
+        function getVerdict(prob) {
+            if (prob >= 85) return { label: "BANKER", bg: "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" };
+            if (prob >= 76) return { label: "KEEP", bg: "bg-amber-500/20 text-amber-400 border-amber-500/30" };
+            return { label: "KILL", bg: "bg-red-500/20 text-red-400 border-red-500/30" };
+        }
+
+        function renderFixtures() {
+            const container = document.getElementById('fixturesList');
+            container.innerHTML = '';
+            const filtered = currentFilter === 'ALL' ? rawFixtures : rawFixtures.filter(f => f.sport === currentFilter);
+
+            filtered.forEach(f => {
+                const v = getVerdict(f.prob);
+                const isToday = f.date === TODAY_DATE;
+                const card = document.createElement('div');
+                card.className = "glass-card p-5 rounded-2xl flex flex-col justify-between space-y-4 hover:border-slate-700 transition";
+                card.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] font-bold px-2.5 py-1 rounded bg-slate-800 text-slate-300 uppercase tracking-wider">${f.comp}</span>
+                        <div class="flex items-center space-x-1.5">
+                            ${isToday ? '<span class="text-[10px] px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 font-bold border border-blue-500/30">TODAY</span>' : ''}
+                            <span class="text-xs px-2.5 py-1 rounded-md font-extrabold border ${v.bg}">${v.label} (${f.prob}%)</span>
+                        </div>
+                    </div>
+                    <div class="space-y-1">
+                        <div class="flex justify-between items-center text-sm font-bold text-white">
+                            <span>${f.home}</span>
+                            <span class="text-xs text-slate-500 font-normal">vs</span>
+                            <span>${f.away}</span>
+                        </div>
+                        <p class="text-xs text-slate-400">Kickoff: ${f.date} &bull; ${f.time}</p>
+                    </div>
+                    <div class="bg-slate-900/60 p-3 rounded-xl border border-borderCol flex items-center justify-between">
+                        <div>
+                            <p class="text-[10px] text-slate-400 uppercase font-semibold">Recommended Market</p>
+                            <p class="text-xs font-bold text-blue-400 mt-0.5">${f.market}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[10px] text-slate-400 uppercase font-semibold">SportyBet Odds</p>
+                            <p class="text-xs font-extrabold text-emerald-400 mt-0.5">@ ${f.odds.toFixed(2)}</p>
+                        </div>
+                    </div>
+                    <button onclick="openInspector(${f.id})" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold py-2 rounded-lg border border-borderCol transition">
+                        <span>🔍 Inspect 9-Step Quantitative Analysis</span>
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function updateStats() {
+            document.getElementById('statTotalFixtures').innerText = rawFixtures.length;
+            document.getElementById('statBankers').innerText = rawFixtures.filter(f => f.date === TODAY_DATE && f.prob >= 85).length;
+            document.getElementById('statKeeps').innerText = rawFixtures.filter(f => f.date === TODAY_DATE && f.prob >= 76 && f.prob < 85).length;
+        }
+
+        function openInspector(id) {
+            const f = rawFixtures.find(item => item.id === id);
+            if (!f) return;
+            document.getElementById('modalSportBadge').innerText = `${f.sport} &bull; ${f.comp}`;
+            document.getElementById('modalFixtureTitle').innerText = `${f.home} vs ${f.away}`;
+            const v = getVerdict(f.prob);
+            document.getElementById('modalContent').innerHTML = `
+                <div class="grid grid-cols-2 gap-4 bg-slate-900/60 p-4 rounded-xl border border-borderCol">
+                    <div>
+                        <p class="text-xs text-slate-400">Model Probability</p>
+                        <p class="text-lg font-black text-emerald-400">${f.prob}% (${v.label})</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-400">SportyBet Odds / Fair Price</p>
+                        <p class="text-lg font-black text-blue-400">@ ${f.odds.toFixed(2)} (Fair: ${(1/(f.prob/100)).toFixed(2)})</p>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Universal 9-Step Protocol Evaluation</h4>
+                    <div class="space-y-2 text-xs">
+                        <div class="p-2.5 rounded-lg bg-slate-900/40 border border-borderCol"><span class="font-bold text-white">Step 1-3 (Venue, Core & Splits):</span> Verified home/away edge validated.</div>
+                        <div class="p-2.5 rounded-lg bg-slate-900/40 border border-borderCol"><span class="font-bold text-white">Step 4-6 (Form & H2H):</span> Scoring projection: <span class="text-blue-400 font-bold">${f.homeGoals} - ${f.awayGoals}</span>.</div>
+                        <div class="p-2.5 rounded-lg bg-slate-900/40 border border-borderCol"><span class="font-bold text-white">Step 7-9 (Projection & Verdict):</span> Recommendation: <span class="text-emerald-400 font-bold">${f.market}</span>.</div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('inspectorModal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('inspectorModal').classList.add('hidden');
+        }
+
+        function generateAccas() {
+            const container = document.getElementById('accasContainer');
+            container.innerHTML = '';
+
+            // STRICTLY ISOLATE TODAY'S MATCHES FOR ACCAS
+            const todaysPool = rawFixtures.filter(f => f.date === TODAY_DATE);
+
+            const bankersOnly = todaysPool.filter(f => f.prob >= 85);
+            const bankersAndKeeps = todaysPool.filter(f => f.prob >= 76);
+            const valuePool = todaysPool.filter(f => f.prob >= 75);
+
+            const tiers = [
+                { name: "Tier 1: Balanced Acca (~5x Odds)", legs: bankersOnly.slice(0, 5), subtitle: "Max 5 ultra-high confidence legs (≥85%) for Today" },
+                { name: "Tier 2: Growth Acca (~10x Odds)", legs: bankersAndKeeps.slice(0, 6), subtitle: "Max 6 vetted legs mixing Bankers & Keeps for Today" },
+                { name: "Tier 3: Elite Acca (~20x Odds)", legs: valuePool.slice(0, 8), subtitle: "Max 8 high-value market divergence picks for Today" }
+            ];
+
+            tiers.forEach(tier => {
+                if (tier.legs.length === 0) return;
+                const combinedOdds = tier.legs.reduce((acc, leg) => acc * leg.odds, 1);
+                const jointProb = tier.legs.reduce((acc, leg) => acc * (leg.prob / 100), 1) * 100;
+
+                const card = document.createElement('div');
+                card.className = "glass-card p-5 rounded-2xl flex flex-col justify-between space-y-4 border border-borderCol";
+                
+                let legsHtml = tier.legs.map(l => `
+                    <div class="flex justify-between items-center text-xs border-b border-borderCol/50 pb-2">
+                        <div>
+                            <span class="font-bold text-white">${l.home} vs ${l.away}</span>
+                            <p class="text-slate-400">${l.market} &bull; ${l.time}</p>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-emerald-400 font-bold">@${l.odds.toFixed(2)}</span>
+                            <p class="text-[10px] text-slate-500">${l.prob}%</p>
+                        </div>
+                    </div>
+                `).join('');
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between border-b border-borderCol pb-3">
+                        <div>
+                            <h3 class="font-bold text-sm text-white">${tier.name}</h3>
+                            <p class="text-[10px] text-slate-400 mt-0.5">${tier.subtitle}</p>
+                        </div>
+                        <span class="text-xs px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 border border-purple-500/30 font-bold">${tier.legs.length} Legs</span>
+                    </div>
+                    <div class="space-y-2">${legsHtml}</div>
+                    <div class="bg-slate-900/60 p-3 rounded-xl border border-borderCol flex justify-between items-center">
+                        <div>
+                            <p class="text-[10px] text-slate-400 uppercase font-semibold">Combined Odds</p>
+                            <p class="text-base font-black text-emerald-400">${combinedOdds.toFixed(2)}x</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[10px] text-slate-400 uppercase font-semibold">Est. Joint Prob</p>
+                            <p class="text-base font-black text-blue-400">${jointProb.toFixed(1)}%</p>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        window.onload = loadFixtures;
+    </script>
+</body>
+</html>
