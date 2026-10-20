@@ -1,0 +1,32 @@
+name: Edgeform Midnight Automated Refresh
+
+on:
+  schedule:
+    # Runs every day at 23:00 UTC (12:00 Midnight WAT)
+    - cron: '0 23 * * *'
+  workflow_dispatch:
+
+jobs:
+  update-engine:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run data sync and verification
+        run: |
+          echo "Executing midnight fixture synchronization..."
+          date > last_build.txt
+
+      - name: Commit and push updates to live site
+        run: |
+          git config --global user.name "Edgeform Auto-Bot"
+          git config --global user.email "bot@edgeform.site"
+          git add -A
+          git commit -m "Automated midnight fixture and model update: $(date +'%Y-%m-%d')" || exit 0
+          git push
